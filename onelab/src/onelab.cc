@@ -4,6 +4,7 @@
 // Alexander Krimm <alex@wirew0rm.de>, TEMF TU-Darmstadt, 2014                //
 ////////////////////////////////////////////////////////////////////////////////
 // PKG_ADD: ollib = which("onelab.oct");
+// PKG_DEL: ollib = which("onelab.oct");
 
 #include <gmsh/onelab.h>
 // undefine Symbols as octave uses the same symbols
