@@ -442,10 +442,10 @@ DEFUN_DLD (ol_sendVertexArray, args, ,
 }
 
 
-// PKG_ADD: autoload("ol_setNumber", ollib);
-// PKG_DEL: try; autoload ("ol_setNumber", ollib, "remove"); catch; end;
-DEFUN_DLD (ol_setNumber, args, ,
-		           "create or update a number")
+// PKG_ADD: autoload("ol_setParameter", ollib);
+// PKG_DEL: try; autoload ("ol_setParameter", ollib, "remove"); catch; end;
+DEFUN_DLD (ol_setParameter, args, ,
+		           "create or update a parameter")
 {
 	// check if connected
 	if (c == NULL) {
@@ -454,52 +454,86 @@ DEFUN_DLD (ol_setNumber, args, ,
 	}
 	// check input parameters
 	int nargin = args.length();
-	if (nargin != 4) 
-		error("call ol_setNumber with name, value, label and helpstring");
-	else {
-		std::string name = args(0).string_value();
-		double value = args(1).double_value();
-		std::string label = args(2).string_value();
-		std::string help = args(3).string_value();
-
+	if (nargin < 1 || nargin > 5 || nargin == 2) {	
+		error("call ol_setNumber with name, type, value, [label] and [helpstring] or parameter struct");
+		return octave_value_list();
+	}
+	// if it is not already a parameter struct, create one
+	octave_scalar_map parameter;
+	if (nargin == 1)
+		parameter = args(0).scalar_map_value();
+	if (nargin > 2) {
+		parameter.assign("name", args(0).string_value());
+		std::string type = args(1).string_value();
+		parameter.assign("type", type);
+		if (type == std::string("number")) {
+				parameter.assign("value", args(2).float_value());
+		} else if (type == std::string("string")) {
+				parameter.assign("value", args(2).string_value());
+		} else {
+			error("parameter type not implemented.");
+		 	return octave_value_list();
+		}
+		parameter.assign("label", "");
+		parameter.assign("help", "");
+	}
+	if (nargin > 3)
+		parameter.assign("label", args(3).string_value());
+	if (nargin > 4)
+		parameter.assign("help", args(4).string_value());
+	// update/create/delete Parameters
+	if (parameter.contents("type").string_value() == "number"){
+		std::string name = parameter.contents("name").string_value();
+		double value = parameter.contents("value").float_value();
+		std::string label = parameter.contents("value").string_value();
+		std::string help = parameter.contents("help").string_value();
 		onelab::number n = onelab::number(name, value, label, help);
+		if (parameter.contains("changed"))
+			n.setChanged(parameter.contents("changed").bool_value());
+		if (parameter.contains("visible"))
+			n.setVisible(parameter.contents("visible").bool_value());
+		if (parameter.contains("readonly"))
+			n.setReadOnly(parameter.contents("readonly").bool_value());
+		//number stuff
+		if (parameter.contains("min"))
+			n.setMin(parameter.contents("min").float_value());
+		if (parameter.contains("max"))
+			n.setMax(parameter.contents("max").float_value());
+		if (parameter.contains("step"))
+			n.setStep(parameter.contents("step").float_value());
+		if (parameter.contains("index"))
+			n.setIndex(parameter.contents("index").int_value());
+		//choices
+//		if (parameter.contains("choices")){
+//			std::vector<double> choices;
+//			std::vector<std::string> choicelabels;
+//			octave_scalar_map octchoices = parameter.contents("choices").scalar_map_value();
+//			for (octave_scalar_map::iterator i = octchoices.begin(); i != octchoices.end(); ++i) {
+//				choices.push_back(i->first);
+//				choicelabels.push_back(i->second);
+//			}
+//			n.setChoices(choices);
+//			n.setChoiceLabels(choicelabels);
+//		}
 		c->set(n);
+	} else if (parameter.contents("type").string_value() == "string") {
+		std::string name = parameter.contents("name").string_value();
+		std::string value = parameter.contents("value").string_value();
+		std::string label = parameter.contents("value").string_value();
+		std::string help = parameter.contents("help").string_value();
+		onelab::string s = onelab::string(name, value, label, help);
+		c->set(s);
+	} else {
+		error("missing or invalid parameter type information");
 	}
 	return octave_value_list ();
 }
 
-
-// PKG_ADD: autoload("ol_setString", ollib);
-// PKG_DEL: try; autoload ("ol_setString", ollib, "remove"); catch; end;
-DEFUN_DLD (ol_setString, args, ,
-		           "create or update a string")
-{
-	// check if connected
-	if (c == NULL) {
-		error("Not connected, doing nothing");
-		return octave_value_list ();
-	}
-	int nargin = args.length();
-	if (nargin != 4) 
-		error("call ol_setNumber with name, value, label and helpstring");
-	else {
-		std::string name = args(0).string_value();
-		std::string value = args(1).string_value();
-		std::string label = args(2).string_value();
-		std::string help = args(3).string_value();
-
-		onelab::string n = onelab::string(name, value, label, help);
-		c->set(n);
-	}
-	return octave_value_list ();
-}
-
-
-octave_value_list ol2oct(std::vector<onelab::parameter> parameterlist){
-	octave_value_list result;
-	for (std::vector<onelab::parameter>::iterator i = parameterlist.begin(); i != parameterlist.end(); ++i){
+void ol2oct(std::vector<onelab::number> parameterlist, octave_value_list &result){
+	for (std::vector<onelab::number>::iterator i = parameterlist.begin(); i != parameterlist.end(); ++i){
 		octave_scalar_map st;
 		// general parameter values
+		st.assign(std::string("name"), i->getName());
 		st.assign(std::string("label"), i->getLabel());
 		st.assign(std::string("help"), i->getHelp());
 		st.assign(std::string("type"),i->getType());
@@ -516,48 +550,143 @@ octave_value_list ol2oct(std::vector<onelab::parameter> parameterlist){
 		}
 		st.assign(std::string("attributes"),attributes);
 
-		std::string type = i->getType();
-		if (type == "number") {
-			onelab::number num = (onelab::number)*i;
-			st.assign(std::string("value"), num.getValue());
-			st.assign(std::string("min"), num.getMin());
-			st.assign(std::string("max"), num.getMax());
-			st.assign(std::string("step"), num.getStep());
-			st.assign(std::string("index"), num.getIndex());
-			// Choices
-			octave_scalar_map choices;
-			std::vector<double> c = num.getChoices();
-			for (std::vector<double>::iterator j = c.begin(); j != c.end(); ++j)
-				choices.assign(to_string(*j),std::string("")); //TODO: find out if choice labels can be read
-			st.assign(std::string("Choices"), choices);
-			// Value Labels
-			octave_scalar_map vlabels;
-			std::map<double, std::string> vl = num.getValueLabels();
-			for (std::map<double, std::string>::iterator j = vl.begin(); j != vl.end(); ++j)
-				vlabels.assign(to_string(j->first),j->second);
-			st.assign(std::string("Labels"), vlabels);
-		} else if (type == "string") {
-			onelab::string s = (onelab::string)*i;
-			st.assign(std::string("value"), s->getValue());
-		} else if (type == "region") {
-			onelab::region r = (onelab::region)*i;
-			st.assign(std::string("value"), r->getValue());
-			//TODO: Implement rest of the region class
-		} else if (type =="expression") {
-			onelab::expression exp = (onelab::expression)*i;
-			st.assign(std::string("value"), exp->getValue());
-			//TODO: Implement rest of the function class
-		} else {
-			// unknown parameter type
-			error("Unknown parameter type" + type);
-		}
+		// number specific
+		st.assign(std::string("value"), i->getValue());
+		st.assign(std::string("min"), i->getMin());
+		st.assign(std::string("max"), i->getMax());
+		st.assign(std::string("step"), i->getStep());
+		st.assign(std::string("index"), i->getIndex());
+		// Choices
+		octave_scalar_map choices;
+		std::vector<double> c = i->getChoices();
+		for (std::vector<double>::iterator j = c.begin(); j != c.end(); ++j)
+			choices.assign(to_string(*j),std::string("")); //TODO: find out if choice labels can be read
+		st.assign(std::string("Choices"), choices);
+		// Value Labels
+		octave_scalar_map vlabels;
+		std::map<double, std::string> vl = i->getValueLabels();
+		for (std::map<double, std::string>::iterator j = vl.begin(); j != vl.end(); ++j)
+			vlabels.assign(to_string(j->first),j->second);
+		st.assign(std::string("Labels"), vlabels);
 		result.append(st);
 	}
-	return result;
+	return;
 }
 
-// PKG_ADD: autoload("ol_getNumber", ollib);
-// PKG_DEL: try; autoload ("ol_getNumber", ollib, "remove"); catch; end;
+void ol2oct(std::vector<onelab::string> parameterlist, octave_value_list &result){
+	for (std::vector<onelab::string>::iterator i = parameterlist.begin(); i != parameterlist.end(); ++i){
+		octave_scalar_map st;
+		// general parameter values
+		st.assign(std::string("name"), i->getName());
+		st.assign(std::string("label"), i->getLabel());
+		st.assign(std::string("help"), i->getHelp());
+		st.assign(std::string("type"),i->getType());
+		st.assign(std::string("Path"),i->getPath());
+		st.assign(std::string("changed"),i->getChanged());
+		st.assign(std::string("neverChanged"),i->getNeverChanged());
+		st.assign(std::string("visible"), i->getVisible());
+		st.assign(std::string("readOnly"), i->getReadOnly());
+		//getAttributes
+		octave_scalar_map attributes;
+		std::map<std::string,std::string> attrlst = i->getAttributes();
+		for (std::map<std::string,std::string>::iterator j = attrlst.begin(); j != attrlst.end(); ++j) {
+			attributes.assign(j->first,j->second);
+		}
+		st.assign(std::string("attributes"),attributes);
+		// string specific
+		st.assign(std::string("value"), i->getValue());
+		st.assign(std::string("kind"), i->getKind());
+		// Choices
+		octave_scalar_map choices;
+		std::vector<std::string> c = i->getChoices();
+		for (std::vector<std::string>::iterator j = c.begin(); j != c.end(); ++j)
+			choices.assign(*j,std::string("")); //TODO: find out if choice labels can be read
+		st.assign(std::string("Choices"), choices);
+		result.append(st);
+	}
+	return;
+}
+
+// TODO implement Region and Function Parameter Types
+//void ol2oct(std::vector<onelab::region> parameterlist, octave_value_list &result){
+//	for (std::vector<onelab::region>::iterator i = parameterlist.begin(); i != parameterlist.end(); ++i){
+//		octave_scalar_map st;
+//		// general parameter values
+//		st.assign(std::string("name"), i->getName());
+//		st.assign(std::string("label"), i->getLabel());
+//		st.assign(std::string("help"), i->getHelp());
+//		st.assign(std::string("type"),i->getType());
+//		st.assign(std::string("Path"),i->getPath());
+//		st.assign(std::string("changed"),i->getChanged());
+//		st.assign(std::string("neverChanged"),i->getNeverChanged());
+//		st.assign(std::string("visible"), i->getVisible());
+//		st.assign(std::string("readOnly"), i->getReadOnly());
+//		//getAttributes
+//		octave_scalar_map attributes;
+//		std::map<std::string,std::string> attrlst = i->getAttributes();
+//		for (std::map<std::string,std::string>::iterator j = attrlst.begin(); j != attrlst.end(); ++j) {
+//			attributes.assign(j->first,j->second);
+//		}
+//		st.assign(std::string("attributes"),attributes);
+//		// region specific
+//		octave_value_list value;
+//		std::set<std::string> val = i->getValue();
+//		for (std::set<std::string>::iterator j = val.begin(); j != val.end(); ++j)
+//			value.append(*j);
+//		st.assign(std::string("value"), value);
+//		st.assign(std::string("dimension"), i->getDimension());
+//		// Choices
+//		octave_value_list choices;
+//		std::vector<std::map<std::string> > c = i->getChoices();
+//		for (std::vector<std::map<std::string> >::iterator j = c.begin(); j != c.end(); ++j){
+//			octave_value_list choicelist;
+//			for (std::map<std::string>::iterator k = j->begin(); k != j->end(); ++k)
+//				choicelist.append(*k);
+//			map
+//			choices.append(*j); //TODO: find out if choice labels can be read
+//		}
+//		st.assign(std::string("Choices"), choices);
+//		result.append(st);
+//	}
+//	return;
+//}
+//
+//void ol2oct(std::vector<onelab::function> parameterlist, octave_value_list &result){
+//	for (std::vector<onelab::function>::iterator i = parameterlist.begin(); i != parameterlist.end(); ++i){
+//		octave_scalar_map st;
+//		// general parameter values
+//		st.assign(std::string("name"), i->getName());
+//		st.assign(std::string("label"), i->getLabel());
+//		st.assign(std::string("help"), i->getHelp());
+//		st.assign(std::string("type"),i->getType());
+//		st.assign(std::string("Path"),i->getPath());
+//		st.assign(std::string("changed"),i->getChanged());
+//		st.assign(std::string("neverChanged"),i->getNeverChanged());
+//		st.assign(std::string("visible"), i->getVisible());
+//		st.assign(std::string("readOnly"), i->getReadOnly());
+//		//getAttributes
+//		octave_scalar_map attributes;
+//		std::map<std::string,std::string> attrlst = i->getAttributes();
+//		for (std::map<std::string,std::string>::iterator j = attrlst.begin(); j != attrlst.end(); ++j) {
+//			attributes.assign(j->first,j->second);
+//		}
+//		st.assign(std::string("attributes"),attributes);
+//		// string specific
+//		st.assign(std::string("value"), i->getValue());
+//		st.assign(std::string("kind"), i->getKind());
+//		// Choices
+//		octave_scalar_map choices;
+//		std::vector<std::string> c = i->getChoices();
+//		for (std::vector<std::string>::iterator j = c.begin(); j != c.end(); ++j)
+//			choices.assign(*j,std::string("")); //TODO: find out if choice labels can be read
+//		st.assign(std::string("Choices"), choices);
+//		result.append(st);
+//	}
+//	return;
+//}
+
+// PKG_ADD: autoload("ol_getParameters", ollib);
+// PKG_DEL: try; autoload ("ol_getParameters", ollib, "remove"); catch; end;
 DEFUN_DLD (ol_getParameters, args, ,
 		           "Parameters from onelab")
 {
@@ -573,48 +702,25 @@ DEFUN_DLD (ol_getParameters, args, ,
 		error("call ol_Parameters with name or without parameter");
 		return octave_value_list ();
 	}
-	std::string name = args(0).string_value();
+	std::string name = std::string("");
+	if (nargin==1) name = args(0).string_value();
 	// Retrieve Parameters
+	octave_value_list result;
 	std::vector<onelab::number> n;
 	c->get(n, name);
+	ol2oct(n, result);
 	std::vector<onelab::string> s;
 	c->get(s, name);
-
-	octave_value_list result;
-	result = ol2oct(n);
+	ol2oct(s, result);
+// TODO: implement Region and function parameters
+//	std::vector<onelab::region> r;
+//	c->get(r, name);
+//	ol2oct(r, result);
+//	std::vector<onelab::function> f;
+//	c->get(f, name);
+//	ol2oct(f, result);
 	return result;
 }
-
-// WILL BE DELETED
-// PKG_ADD: autoload("ol_getString", ollib);
-// PKG_DEL: try; autoload ("ol_getString", ollib, "remove"); catch; end;
-DEFUN_DLD (ol_getString, args, ,
-		           "get a String from onelab")
-{
-	// check if connected
-	if (c == NULL) {
-		error("Not connected, doing nothing");
-		return octave_value_list ();
-	}
-	int nargin = args.length();
-	if (nargin != 1) {
-		error("call ol_getString with name");
-		return octave_value_list ();
-	}
-	std::string name = args(0).string_value();
-
-	std::vector<onelab::string> s;
-	octave_value_list result;
-	if (c->get(s, name)){
-		for (std::vector<onelab::string>::iterator si = s.begin(); si != s.end(); ++si){
-			octave_scalar_map st;
-			st.assign("value", si->getValue());
-			result.append(st);
-		}
-	}
-	return result;
-}
-
 
 // PKG_ADD: autoload("ol_toString", ollib);
 // PKG_DEL: try; autoload ("ol_toString", ollib, "remove"); catch; end;
@@ -629,12 +735,12 @@ DEFUN_DLD (ol_toString, args, ,
 	if (nargin != 0) 
 		error("toStrin has no arguments");
 	else {
-		octave_value_list result;
+		std::stringstream result;
 		std::vector<std::string> v = c->toChar();
 		for (std::vector<std::string>::iterator vi = v.begin(); vi != v.end(); ++vi){
-			result.append(*vi);
+			result << *vi << std::endl;
 		}
-		return result;
+		return octave_value_list(result.str());
 	}
 	return octave_value_list ();
 }

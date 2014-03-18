@@ -68,25 +68,25 @@ g = 9.8;
 m = 0.3;
 
 l=1.0;
-ol_setNumber("Geom/Length", l, "Arm length[m]", "Length of the arm");
+ol_setParameter("Geom/Length", "number", l, "Arm length[m]", "Length of the arm");
 time = 0.0;
-ol_setNumber("Geom/time", time, "time [s]", "elapsed time");
+ol_setParameter("Geom/time", "number", time, "time [s]", "elapsed time");
 dt = 0.001;
-ol_setNumber("Geom/dt", dt, "time step [s]", "time step size");
+ol_setParameter("Geom/dt", "number", dt, "time step [s]", "time step size");
 tmax = 20;
-ol_setNumber("Geom/tmax", tmax, "max time [s]", "Maximum time");
+ol_setParameter("Geom/tmax", "number", tmax, "max time [s]", "Maximum time");
 refresh = 0.05;
-ol_setNumber("Geom/refresh", refresh, "refresh interval [s]", "");
+ol_setParameter("Geom/refresh", "number", refresh, "refresh interval [s]", "");
 theta0 = 10;
-ol_setNumber("Geom/theta", theta0, "Initial theta angle[deg]", "");
+ol_setParameter("Geom/theta", "number", theta0, "Initial theta angle[deg]", "");
 phi0 = 180;
-ol_setNumber("Geom/phi", phi0, "Initial Phi angle [deg]", "");
+ol_setParameter("Geom/phi", "number", phi0, "Initial Phi angle [deg]", "");
 
 printf("+++\n");
 test = ol_toString
 printf("+++\n");
 % we're done if we are in the "check" phase
-if (!strcmp(ol_getString([name "/Action"])(1).value, "compute"))
+if (!strcmp(ol_getParameters([name "/Action"]).value, "compute"))
 	printf("Nothing to do");
 	ol_disconnect();
 	exit;
@@ -138,26 +138,26 @@ while (time < tmax)
 
 	if (refr >= refresh)
 		refr = 0;
-		ol_setNumber([name '/Progress'], time, "Progress", "");
-		ol_setNumber('Dyna/time', time, "time", "");
-		ol_setNumber('Solu/phi', phi, "phi", "");
+		ol_setParameter([name '/Progress'], "number", time, "Progress", "");
+		ol_setParameter('Dyna/time', "number", time, "time", "");
+		ol_setParameter('Solu/phi', "number", phi, "phi", "");
 		% not implemented yet
 		%ol_addNumberChoice('Solu/phi', phi)
-		ol_setNumber('Solu/theta', theta, "theta", "");
+		ol_setParameter('Solu/theta', "number", theta, "theta", "");
 		%not implemented yet
 		%ol_addNumberChoice('Solu/theta', theta)
-		ol_setNumber('Solu/phi_dot', phi_dot, "phi_dot", "");
+		ol_setParameter('Solu/phi_dot', "number", phi_dot, "phi_dot", "");
 		% not yet implemented
 		%ol_addNumberChoice('Solu/phi_dot', phi_dot)
-		ol_setNumber('Solu/theta_dot', theta_dot, "theta_dot", "");
+		ol_setParameter('Solu/theta_dot', "number", theta_dot, "theta_dot", "");
 		%not yet implemented :(
 		%ol_addNumberChoice('Solu/theta_dot', theta_dot)
 
 		% ask Gmsh to refresh
-		ol_setString('Gmsh/Action', 'refresh', "action", "");
+		ol_setParameter('Gmsh/Action', "string", 'refresh', "action", "");
 
 		% stop if we are asked to (by Gmsh)
-		if (strcmp(ol_getString([name "/Action"])(1).value, "stop"))
+		if (strcmp(ol_getParameters([name "/Action"]).value, "stop"))
 			break;
 		endif
 
