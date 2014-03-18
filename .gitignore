@@ -2,3 +2,6 @@ octave-core
 *.o
 *.oct
 *.swp
+octave-workspace
+*.msh
+*.opt
