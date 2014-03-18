@@ -29,18 +29,23 @@ DEFUN_DLD (ol_client, args, ,
 		Connect to the onelab server listening on @var{adress} with the solver\n\
 		name @var{name}\n\
 		@end deftypefn") {
+	// check if there already is a connection
+	if (c != NULL) {
+		error("Already connected");
+		return octave_value_list ();
+	}
+	// check input arguments
 	int nargin = args.length();
-	if (nargin != 2) 
+	if (nargin != 2) {
 		print_usage ();
 		error("call ol_client with solver name and server adress");
-	else {
-		std::string name, address;
-		name = args(0).string_value();
-		address = args(1).string_value();
-
-		if (c != NULL) delete c;
-		c = new onelab::remoteNetworkClient(name, address);
+		return octave_value_list ();
 	}
+	std::string name, address;
+	name = args(0).string_value();
+	address = args(1).string_value();
+	// establish connection to the server
+	c = new onelab::remoteNetworkClient(name, address);
 	return octave_value_list ();
 }
 
@@ -49,10 +54,21 @@ DEFUN_DLD (ol_client, args, ,
 // PKG_DEL: try; autoload ("ol_disconnect", ollib, "remove"); catch; end;
 DEFUN_DLD (ol_disconnect, args, ,
 		"disconnect from the server and free the resources") {
-	if (c != NULL) {
-		delete c;
-		c = NULL;
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
+	// check input arguments
+	int nargin = args.length();
+	if (nargin != 0) {
+		print_usage ();
+		error("too many arguments");
+		return octave_value_list ();
+	}
+	// Delete the client object
+	delete c;
+	c = NULL;
 	return octave_value_list ();
 }
 
@@ -62,15 +78,22 @@ DEFUN_DLD (ol_disconnect, args, ,
 DEFUN_DLD (ol_getName, args, ,
 		           "get client name")
 {
-	int nargin = args.length();
-	if (nargin != 0) 
-		error("getName has no arguments");
-	else {
-		std::string name;
-		name = c->getName();
-		return octave_value_list(name);
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
-	return octave_value_list ();
+	// checking input arguments
+	int nargin = args.length();
+	if (nargin != 0) {
+		print_usage ();
+		error("getName has no arguments");
+		return octave_value_list ();
+	}
+	// return name
+	std::string name;
+	name = c->getName();
+	return octave_value_list(name);
 }
 
 
@@ -79,13 +102,21 @@ DEFUN_DLD (ol_getName, args, ,
 DEFUN_DLD (ol_setId, args, ,
 		           "set client id")
 {
-	int nargin = args.length();
-	if (nargin != 1) 
-		error("setID needs argument id");
-	else {
-		int id = args(0).int_value();
-		c->setId(id);
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
+	// checking input arguments
+	int nargin = args.length();
+	if (nargin != 1) {
+		print_usage();
+		error("setID needs argument id");
+		return octave_value_list ();
+	}
+	// Set the ID
+	int id = args(0).int_value();
+	c->setId(id);
 	return octave_value_list ();
 }
 
@@ -95,15 +126,22 @@ DEFUN_DLD (ol_setId, args, ,
 DEFUN_DLD (ol_getId, args, ,
 		           "get client id")
 {
-	int nargin = args.length();
-	if (nargin != 0) 
-		error("getId has no arguments");
-	else {
-		int id;
-		id = c->getId();
-		return octave_value_list(id);
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
-	return octave_value_list ();
+	// checking input parameters
+	int nargin = args.length();
+	if (nargin != 0) {
+		print_usage();
+		error("getId has no arguments");
+		return octave_value_list ();
+	}
+	// Get the ID
+	int id;
+	id = c->getId();
+	return octave_value_list(id);
 }
 
 
@@ -112,13 +150,21 @@ DEFUN_DLD (ol_getId, args, ,
 DEFUN_DLD (ol_setIndex, args, ,
 		           "set client index")
 {
-	int nargin = args.length();
-	if (nargin != 1) 
-		error("setIndex needs argument index");
-	else {
-		int index = args(0).int_value();
-		c->setIndex(index);
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
+	// check input arguments
+	int nargin = args.length();
+	if (nargin != 1) {
+		print_usage();
+		error("setIndex needs argument index");
+		return octave_value_list ();
+	}
+	// Set the index
+	int index = args(0).int_value();
+	c->setIndex(index);
 	return octave_value_list ();
 }
 
@@ -126,17 +172,24 @@ DEFUN_DLD (ol_setIndex, args, ,
 // PKG_ADD: autoload("ol_getIndex", ollib);
 // PKG_DEL: try; autoload ("ol_getIndex", ollib, "remove"); catch; end;
 DEFUN_DLD (ol_getIndex, args, ,
-		           "get client id")
+		           "get client index")
 {
-	int nargin = args.length();
-	if (nargin != 0) 
-		error("getIndex has no arguments");
-	else {
-		int index;
-		index = c->getIndex();
-		return octave_value_list(index);
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
-	return octave_value_list ();
+	// check input parameters
+	int nargin = args.length();
+	if (nargin != 0) { 
+		print_usage();
+		error("getIndex has no arguments");
+		return octave_value_list ();
+	}
+	// get Index
+	int index;
+	index = c->getIndex();
+	return octave_value_list(index);
 }
 
 
@@ -145,13 +198,20 @@ DEFUN_DLD (ol_getIndex, args, ,
 DEFUN_DLD (ol_run, args, ,
 		           "run client")
 {
-	int nargin = args.length();
-	if (nargin != 0) 
-		error("run has no arguments");
-	else {
-		return octave_value_list(c->run());
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
-	return octave_value_list ();
+	// checking input parameters
+	int nargin = args.length();
+	if (nargin != 0) {
+		print_usage();
+		error("run has no arguments");
+		return octave_value_list ();
+	}
+	// run it and return values
+	return octave_value_list(c->run());
 }
 
 
@@ -160,13 +220,20 @@ DEFUN_DLD (ol_run, args, ,
 DEFUN_DLD (ol_isNetworkClient, args, ,
 		           "check if client is network client")
 {
-	int nargin = args.length();
-	if (nargin != 0) 
-		error("isNetworkClient has no arguments");
-	else {
-		return octave_value_list(c->isNetworkClient());
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
-	return octave_value_list ();
+	// check input parameters
+	int nargin = args.length();
+	if (nargin != 0) {
+		print_usage();
+		error("isNetworkClient has no arguments");
+		return octave_value_list ();
+	}
+	// check if the client is a network client
+	return octave_value_list(c->isNetworkClient());
 }
 
 
@@ -175,13 +242,20 @@ DEFUN_DLD (ol_isNetworkClient, args, ,
 DEFUN_DLD (ol_kill, args, ,
 		           "kill client")
 {
-	int nargin = args.length();
-	if (nargin != 0) 
-		error("kill has no arguments");
-	else {
-		return octave_value_list(c->kill());
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
-	return octave_value_list ();
+	// check input parameters
+	int nargin = args.length();
+	if (nargin != 0) {
+		print_usage();
+		error("kill has no arguments");
+		return octave_value_list ();
+	}
+	// Kill client process
+	return octave_value_list(c->kill());
 }
 
 
@@ -190,13 +264,22 @@ DEFUN_DLD (ol_kill, args, ,
 DEFUN_DLD (ol_sendInfo, args, ,
 		           "send info")
 {
-	int nargin = args.length();
-	if (nargin != 1) 
-		error("call ol_sendInfo with msg");
-	else {
-		std::string msg = args(0).string_value();
-		c->sendInfo(msg);
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
+	// check input arguments
+	int nargin = args.length();
+	if (nargin != 1) {
+		print_usage();
+		error("call ol_sendInfo with msg");
+		return octave_value_list ();
+	}
+	std::string msg = args(0).string_value();
+	//TODO check conversion to string
+	// send Information message to onelab server
+	c->sendInfo(msg);
 	return octave_value_list ();
 }
 
@@ -206,13 +289,22 @@ DEFUN_DLD (ol_sendInfo, args, ,
 DEFUN_DLD (ol_sendWarning, args, ,
 		           "send Warning")
 {
-	int nargin = args.length();
-	if (nargin != 1) 
-		error("call ol_sendWarning with msg");
-	else {
-		std::string msg = args(0).string_value();
-		c->sendWarning(msg);
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
+	// check input parameters
+	int nargin = args.length();
+	if (nargin != 1) {
+		print_usage();
+		error("call ol_sendWarning with msg");
+		return octave_value_list ();
+	}
+	std::string msg = args(0).string_value();
+	//TODO check conversion to string
+	// send Warning message to onelab server
+	c->sendWarning(msg);
 	return octave_value_list ();
 }
 
@@ -222,13 +314,22 @@ DEFUN_DLD (ol_sendWarning, args, ,
 DEFUN_DLD (ol_sendError, args, ,
 		           "send error")
 {
-	int nargin = args.length();
-	if (nargin != 1) 
-		error("call ol_sendError with msg");
-	else {
-		std::string msg = args(0).string_value();
-		c->sendError(msg);
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
+	// check input parameters
+	int nargin = args.length();
+	if (nargin != 1) {
+		print_usage();
+		error("call ol_sendError with msg");
+		return octave_value_list ();
+	}
+	std::string msg = args(0).string_value();
+	//TODO check conversion to string
+	// Sent Error message to the onelab server
+	c->sendError(msg);
 	return octave_value_list ();
 }
 
@@ -238,13 +339,22 @@ DEFUN_DLD (ol_sendError, args, ,
 DEFUN_DLD (ol_sendProgress, args, ,
 		           "send progress")
 {
-	int nargin = args.length();
-	if (nargin != 1) 
-		error("call ol_sendProgress with msg");
-	else {
-		std::string msg = args(0).string_value();
-		c->sendProgress(msg);
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
+	// check input parameters
+	int nargin = args.length();
+	if (nargin != 1) {
+		print_usage();
+		error("call ol_sendProgress with msg");
+		return octave_value_list ();
+	}
+	std::string msg = args(0).string_value();
+	//TODO: Check conversion to string
+	// update Client Progress Status (shown in gmsh status bar)
+	c->sendProgress(msg);
 	return octave_value_list ();
 }
 
@@ -254,13 +364,22 @@ DEFUN_DLD (ol_sendProgress, args, ,
 DEFUN_DLD (ol_sendMergeFileRequest, args, ,
 		           "send merge file request")
 {
-	int nargin = args.length();
-	if (nargin != 1) 
-		error("call ol_sendMergeFileRequest with msg");
-	else {
-		std::string msg = args(0).string_value();
-		c->sendMergeFileRequest(msg);
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
+	// check input parameters
+	int nargin = args.length();
+	if (nargin != 1) {
+		print_usage();
+		error("call ol_sendMergeFileRequest with msg");
+		return octave_value_list ();
+	}
+	std::string msg = args(0).string_value();
+	//TODO: Check to string conversion
+	// Make onelab load files into gmsh
+	c->sendMergeFileRequest(msg);
 	return octave_value_list ();
 }
 
@@ -270,13 +389,21 @@ DEFUN_DLD (ol_sendMergeFileRequest, args, ,
 DEFUN_DLD (ol_sendParseStringRequest, args, ,
 		           "send parse string request")
 {
-	int nargin = args.length();
-	if (nargin != 1) 
-		error("call ol_sendParseStringRequest with msg");
-	else {
-		std::string msg = args(0).string_value();
-		c->sendParseStringRequest(msg);
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
+	int nargin = args.length();
+	if (nargin != 1) {
+		print_usage();
+		error("call ol_sendParseStringRequest with msg");
+		return octave_value_list ();
+	}
+	std::string msg = args(0).string_value();
+	//TODO: check to string conversion
+	// send Parse String Request
+	c->sendParseStringRequest(msg);
 	return octave_value_list ();
 }
 
@@ -286,13 +413,22 @@ DEFUN_DLD (ol_sendParseStringRequest, args, ,
 DEFUN_DLD (ol_sendVertexArray, args, ,
 		           "send vertex array")
 {
-	int nargin = args.length();
-	if (nargin != 1) 
-		error("call ol_sendVertexArray with msg");
-	else {
-		std::string msg = args(0).string_value();
-		c->sendVertexArray(msg);
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
+	// check input parameters
+	int nargin = args.length();
+	if (nargin != 1) {
+		print_usage();
+		error("call ol_sendVertexArray with msg");
+		return octave_value_list ();
+	}
+	std::string msg = args(0).string_value();
+	//TODO: check conversion to string
+	// Send Vertex array
+	c->sendVertexArray(msg);
 	return octave_value_list ();
 }
 
@@ -302,6 +438,12 @@ DEFUN_DLD (ol_sendVertexArray, args, ,
 DEFUN_DLD (ol_setNumber, args, ,
 		           "create or update a number")
 {
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
+	}
+	// check input parameters
 	int nargin = args.length();
 	if (nargin != 4) 
 		error("call ol_setNumber with name, value, label and helpstring");
@@ -323,6 +465,11 @@ DEFUN_DLD (ol_setNumber, args, ,
 DEFUN_DLD (ol_setString, args, ,
 		           "create or update a string")
 {
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
+	}
 	int nargin = args.length();
 	if (nargin != 4) 
 		error("call ol_setNumber with name, value, label and helpstring");
@@ -344,20 +491,20 @@ octave_value_list ol2oct(std::vector<onelab::number> parameterlist){
 	for (std::vector<onelab::number>::iterator i = parameterlist.begin(); i != parameterlist.end(); ++i){
 		octave_scalar_map st;
 		// general parameter values
-		st.assign("label", i->getLabel());
-		st.assign("help", i->getHelp());
-		st.assign("type"),i->getType();
-		st.assign("Path"),i->getPath();
-		st.assign("changed"),i->getChanged();
-		st.assign("neverChanged"),i->getNeverChanged();
-		st.assign("visible", i->getVisible());
-		st.assign("readOnly", i->getReadOnly());
+		st.assign(std::string("label"), i->getLabel());
+		st.assign(std::string("help"), i->getHelp());
+		st.assign(std::string("type"),i->getType());
+		st.assign(std::string("Path"),i->getPath());
+		st.assign(std::string("changed"),i->getChanged());
+		st.assign(std::string("neverChanged"),i->getNeverChanged());
+		st.assign(std::string("visible"), i->getVisible());
+		st.assign(std::string("readOnly"), i->getReadOnly());
 		//getAttributes
 		//octave_scalar_map attributes;
-		st.assign("attributes", i->getAttributes());
+		//st.assign(std::string("attributes"), i->getAttributes());
 
 		//number specific
-		st.assign("value", i->getValue());
+		st.assign(std::string("value"), i->getValue());
 
 		result.append(st);
 	}
@@ -366,28 +513,44 @@ octave_value_list ol2oct(std::vector<onelab::number> parameterlist){
 
 // PKG_ADD: autoload("ol_getNumber", ollib);
 // PKG_DEL: try; autoload ("ol_getNumber", ollib, "remove"); catch; end;
-DEFUN_DLD (ol_getNumber, args, ,
-		           "get a Number from onelab")
+DEFUN_DLD (ol_getParameters, args, ,
+		           "Parameters from onelab")
 {
-	int nargin = args.length();
-	octave_value_list result;
-	if (nargin != 1) 
-		error("call ol_getNumber with name");
-	else {
-		std::vector<onelab::number> n;
-		std::string name = args(0).string_value();
-		c->get(n, name);
-	 	result = ol2oct(n);
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
 	}
+	// check input parameters
+	int nargin = args.length();
+	if (nargin > 1) {
+		print_usage();
+		error("call ol_Parameters with name or without parameter");
+		return octave_value_list ();
+	}
+	std::string name = args(0).string_value();
+	// Retrieve Parameters
+	std::vector<onelab::number> n;
+	c->get(n, name);
+	std::vector<onelab::string> s;
+	c->get(s, name);
+
+	octave_value_list result;
+	result = ol2oct(n);
 	return result;
 }
 
-
+// WILL BE DELETED
 // PKG_ADD: autoload("ol_getString", ollib);
 // PKG_DEL: try; autoload ("ol_getString", ollib, "remove"); catch; end;
 DEFUN_DLD (ol_getString, args, ,
 		           "get a String from onelab")
 {
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
+	}
 	int nargin = args.length();
 	if (nargin != 1) {
 		error("call ol_getString with name");
@@ -412,6 +575,11 @@ DEFUN_DLD (ol_getString, args, ,
 // PKG_DEL: try; autoload ("ol_toString", ollib, "remove"); catch; end;
 DEFUN_DLD (ol_toString, args, ,
 		"output all Parameters as strings") {
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
+	}
 	int nargin = args.length();
 	if (nargin != 0) 
 		error("toStrin has no arguments");
