@@ -1,3 +1,4 @@
 octave-core
 *.o
 *.oct
+*.swp
