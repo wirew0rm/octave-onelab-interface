@@ -12,12 +12,21 @@
 #undef HAVE_FLTK
 #include <stdio.h>
 #include <iostream>
+#include <sstream>
 #include <oct.h>
 #include <octave/ov-struct.h>
 
 #ifndef DEFCONST
 #define DEFCONST(name, defn, doc) DEFCONST_INTERNAL(name, defn, doc)
 #endif
+
+// define to string to not depend on C++11
+template <typename T>
+std::string to_string(T const& value) {
+	std::stringstream sstr;
+	sstr << value;
+	return sstr.str();
+}
 
 onelab::remoteNetworkClient *c = NULL;
 
@@ -486,9 +495,9 @@ DEFUN_DLD (ol_setString, args, ,
 }
 
 
-octave_value_list ol2oct(std::vector<onelab::number> parameterlist){
+octave_value_list ol2oct(std::vector<onelab::parameter> parameterlist){
 	octave_value_list result;
-	for (std::vector<onelab::number>::iterator i = parameterlist.begin(); i != parameterlist.end(); ++i){
+	for (std::vector<onelab::parameter>::iterator i = parameterlist.begin(); i != parameterlist.end(); ++i){
 		octave_scalar_map st;
 		// general parameter values
 		st.assign(std::string("label"), i->getLabel());
@@ -500,12 +509,48 @@ octave_value_list ol2oct(std::vector<onelab::number> parameterlist){
 		st.assign(std::string("visible"), i->getVisible());
 		st.assign(std::string("readOnly"), i->getReadOnly());
 		//getAttributes
-		//octave_scalar_map attributes;
-		//st.assign(std::string("attributes"), i->getAttributes());
+		octave_scalar_map attributes;
+		std::map<std::string,std::string> attrlst = i->getAttributes();
+		for (std::map<std::string,std::string>::iterator j = attrlst.begin(); j != attrlst.end(); ++j) {
+			attributes.assign(j->first,j->second);
+		}
+		st.assign(std::string("attributes"),attributes);
 
-		//number specific
-		st.assign(std::string("value"), i->getValue());
-
+		std::string type = i->getType();
+		if (type == "number") {
+			onelab::number num = (onelab::number)*i;
+			st.assign(std::string("value"), num.getValue());
+			st.assign(std::string("min"), num.getMin());
+			st.assign(std::string("max"), num.getMax());
+			st.assign(std::string("step"), num.getStep());
+			st.assign(std::string("index"), num.getIndex());
+			// Choices
+			octave_scalar_map choices;
+			std::vector<double> c = num.getChoices();
+			for (std::vector<double>::iterator j = c.begin(); j != c.end(); ++j)
+				choices.assign(to_string(*j),std::string("")); //TODO: find out if choice labels can be read
+			st.assign(std::string("Choices"), choices);
+			// Value Labels
+			octave_scalar_map vlabels;
+			std::map<double, std::string> vl = num.getValueLabels();
+			for (std::map<double, std::string>::iterator j = vl.begin(); j != vl.end(); ++j)
+				vlabels.assign(to_string(j->first),j->second);
+			st.assign(std::string("Labels"), vlabels);
+		} else if (type == "string") {
+			onelab::string s = (onelab::string)*i;
+			st.assign(std::string("value"), s->getValue());
+		} else if (type == "region") {
+			onelab::region r = (onelab::region)*i;
+			st.assign(std::string("value"), r->getValue());
+			//TODO: Implement rest of the region class
+		} else if (type =="expression") {
+			onelab::expression exp = (onelab::expression)*i;
+			st.assign(std::string("value"), exp->getValue());
+			//TODO: Implement rest of the function class
+		} else {
+			// unknown parameter type
+			error("Unknown parameter type" + type);
+		}
 		result.append(st);
 	}
 	return result;
