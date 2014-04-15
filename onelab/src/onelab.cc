@@ -20,7 +20,7 @@
 #define DEFCONST(name, defn, doc) DEFCONST_INTERNAL(name, defn, doc)
 #endif
 
-// define to string to not depend on C++11
+// define to_string() to not depend on C++11
 template <typename T>
 std::string to_string(T const& value) {
 	std::stringstream sstr;
@@ -202,10 +202,35 @@ DEFUN_DLD (ol_getIndex, args, ,
 }
 
 
-// PKG_ADD: autoload("ol_run", ollib);
-// PKG_DEL: try; autoload ("ol_run", ollib, "remove"); catch; end;
-DEFUN_DLD (ol_run, args, ,
+// PKG_ADD: autoload("ol_runNonBlockingSubClient", ollib);
+// PKG_DEL: try; autoload ("ol_runNonBlockingSubClient", ollib, "remove"); catch; end;
+DEFUN_DLD (ol_runNonBlockingSubClient, args, ,
 		           "run client")
+{
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
+	}
+	// checking input parameters
+	int nargin = args.length();
+	if (nargin != 2) {
+		print_usage();
+		error("runNonBlockingSubClient(name, command)");
+		return octave_value_list ();
+	}
+	std::string name = args(0).string_value();
+	std::string command = args(1).string_value();
+	//TODO check conversion to string
+	// run it and return values
+	c->runNonBlockingSubClient(name, command);
+	return octave_value_list();
+}
+
+// PKG_ADD: autoload("ol_waitOnSubClients", ollib);
+// PKG_DEL: try; autoload ("ol_waitOnSubClients", ollib, "remove"); catch; end;
+DEFUN_DLD (ol_waitOnSubClients, args, ,
+		           "wait for subclients to finish")
 {
 	// check if connected
 	if (c == NULL) {
@@ -216,11 +241,38 @@ DEFUN_DLD (ol_run, args, ,
 	int nargin = args.length();
 	if (nargin != 0) {
 		print_usage();
-		error("run has no arguments");
+		error("ol_waitOnSubClients expects no arguments");
 		return octave_value_list ();
 	}
 	// run it and return values
-	return octave_value_list(c->run());
+	c->waitOnSubClients();
+	return octave_value_list();
+}
+
+// PKG_ADD: autoload("ol_runBlockingSubClient", ollib);
+// PKG_DEL: try; autoload ("ol_runBlockingSubClient", ollib, "remove"); catch; end;
+DEFUN_DLD (ol_runBlockingSubClient, args, ,
+		           "run client and wait for it to finish before proceeding")
+{
+	// check if connected
+	if (c == NULL) {
+		error("Not connected, doing nothing");
+		return octave_value_list ();
+	}
+	// checking input parameters
+	int nargin = args.length();
+	if (nargin != 2) {
+		print_usage();
+		error("runBlockingSubClient(name, command)");
+		return octave_value_list ();
+	}
+	std::string name = args(0).string_value();
+	std::string command = args(1).string_value();
+	//TODO check conversion to string
+	// run it and return values
+	c->runNonBlockingSubClient(name, command);
+	c->waitOnSubClients();
+	return octave_value_list();
 }
 
 
