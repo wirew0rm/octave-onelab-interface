@@ -771,7 +771,11 @@ DEFUN_DLD (ol_getParameters, args, ,
 //	std::vector<onelab::function> f;
 //	c->get(f, name);
 //	ol2oct(f, result);
-	return result;
+
+//	Return a list of parameters
+	octave_value_list resultwrap;
+	resultwrap(0) = result.cell_value();
+	return octave_value(resultwrap);
 }
 
 // PKG_ADD: autoload("ol_toString", ollib);
