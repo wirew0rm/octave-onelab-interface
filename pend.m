@@ -67,102 +67,147 @@ endfunction
 g = 9.8;
 m = 0.3;
 
-l=1.0;
-ol_setParameter("Geom/Length", "number", l, "Arm length[m]", "Length of the arm");
-time = 0.0;
-ol_setParameter("Geom/time", "number", time, "time [s]", "elapsed time");
-dt = 0.001;
-ol_setParameter("Geom/dt", "number", dt, "time step [s]", "time step size");
-tmax = 20;
-ol_setParameter("Geom/tmax", "number", tmax, "max time [s]", "Maximum time");
-refresh = 0.05;
-ol_setParameter("Geom/refresh", "number", refresh, "refresh interval [s]", "");
-theta0 = 10;
-ol_setParameter("Geom/theta", "number", theta0, "Initial theta angle[deg]", "");
-phi0 = 180;
-ol_setParameter("Geom/phi", "number", phi0, "Initial Phi angle [deg]", "");
+l.name = "Geom/Length";
+l.type = "number";
+l.value=1.0;
+l.label = "Arm length[m]";
+l.help = "Length of the arm";
+ol_setParameter(l);
+
+time.name = "Dyna/time";
+time.type = "number";
+time.value = 0.0;
+time.label = "time [s]";
+time.help = "elapsed time";
+ol_setParameter(time);
+
+dt.name = "Geom/dt";
+dt.type = "number";
+dt.value = 0.001;
+dt.label = "time step [s]";
+dt.help = "time step size";
+ol_setParameter(dt);
+
+tmax.name = "Geom/tmax";
+tmax.type = "number";
+tmax.value = 20;
+tmax.label = "max time [s]";
+tmax.help = "Maximum time";
+ol_setParameter(tmax);
+
+refresh.name = "Geom/refresh";
+refresh.type = "number";
+refresh.value = 0.05;
+refresh.label = "refresh interval [s]";
+ol_setParameter(refresh);
+
+theta0.name = "Geom/theta";
+theta0.type = "number";
+theta0.value = 10;
+theta0.label = "Initial theta angle[deg]";
+ol_setParameter(theta0);
+
+phi0.name = "Geom/phi";
+phi0.type = "number";
+phi0.value = 180;
+phi0.label = "Initial Phi angle [deg]";
+ol_setParameter(phi0);
 
 printf("+++\n");
 test = ol_toString
 printf("+++\n");
 % we're done if we are in the "check" phase
-if (!strcmp(ol_getParameters([name "/Action"]).value, "compute"))
+action = ol_getParameters([name "/Action"]);
+if (!strcmp(action{1}.value, "compute"))
 	printf("Nothing to do");
 	ol_disconnect();
 	exit;
 endif
 
-l1 = l;
-l2 = l;
+l1 = l.value;
+l2 = l.value;
 m1 = m;
 m2 = m;
-theta = theta0 / 180 * pi;
-phi = phi0 / 180 * pi;
-theta_dot = 0.0;
-phi_dot = 0.0;
+theta.name = 'Solu/theta';
+theta.choices = cell();
+theta.type = "number";
+theta.label = "theta";
+theta.value = theta0.value / 180 * pi;
+phi.name = 'Solu/phi';
+phi.choices = cell();
+phi.type = "number";
+phi.label = "phi";
+phi.value = phi0.value / 180 * pi;
+theta_dot.name = 'Solu/theta_dot';
+theta_dot.choices = cell();
+theta_dot.type = "number";
+theta_dot.label = "theta_dot";
+theta_dot.value = 0.0;
+phi_dot.name = 'Solu/phi_dot';
+phi_dot.choices = cell();
+phi_dot.type = "number";
+phi_dot.label = "phi_dot";
+phi_dot.value = 0.0;
 refr = 0.0;
 iter = 0;
-time = 0.0;
+time.value = 0.0;
 
-while (time < tmax)
-	delta = phi - theta;
+while (time.value < tmax.value)
+	delta = phi.value - theta.value;
 	sdelta = sin(delta);
 	cdelta = cos(delta);
-	theta_dot_dot = ( m2*l1*(theta_dot**2.0)*sdelta*cdelta ...
-										+ m2*g*sin(phi)*cdelta ...
-										+ m2*l2*(phi_dot**2.0)*sdelta ...
-										- (m1+m2)*g*sin(theta) );
+	theta_dot_dot = ( m2*l1*(theta_dot.value**2.0)*sdelta*cdelta ...
+										+ m2*g*sin(phi.value)*cdelta ...
+										+ m2*l2*(phi_dot.value**2.0)*sdelta ...
+										- (m1+m2)*g*sin(theta.value) );
 	theta_dot_dot /= ( (m1+m2)*l1 - m2*l1*(cdelta)**2.0 );
 
-	phi_dot_dot = ( -m2*l2*(phi_dot**2.0)*sdelta*cdelta ...
-									 + (m1+m2)*(g*sin(theta)*cdelta ...
-															- l1*(theta_dot**2.0)*sdelta ...
-															- g*sin(phi)) );
+	phi_dot_dot = ( -m2*l2*(phi_dot.value**2.0)*sdelta*cdelta ...
+									 + (m1+m2)*(g*sin(theta.value)*cdelta ...
+															- l1*(theta_dot.value**2.0)*sdelta ...
+															- g*sin(phi.value)) );
 	phi_dot_dot /= ( (m1+m2)*l2 - m2*l2*(cdelta)**2.0 );
 
-	theta_dot = theta_dot + theta_dot_dot*dt;
-	phi_dot = phi_dot + phi_dot_dot*dt;
+	theta_dot.value = theta_dot.value + theta_dot_dot*dt.value;
+	phi_dot.value = phi_dot.value + phi_dot_dot*dt.value;
 
-	theta = theta + theta_dot*dt;
-	phi = phi + phi_dot*dt;
+	theta.value = theta.value + theta_dot.value*dt.value;
+	phi.value = phi.value + phi_dot.value*dt.value;
 
-	x1 =  l1*sin(theta);
-	y1 = -l1*cos(theta);
-	x2 =  l1*sin(theta) + l2*sin(phi);
-	y2 = -l1*cos(theta) - l2*cos(phi);
+	x1 =  l1*sin(theta.value);
+	y1 = -l1*cos(theta.value);
+	x2 =  l1*sin(theta.value) + l2*sin(phi.value);
+	y2 = -l1*cos(theta.value) - l2*cos(phi.value);
 
-	time += dt;
-	refr += dt;
+	time.value += dt.value;
+	refr += dt.value;
 
 	exportMshOpt();
 
-	if (refr >= refresh)
+	if (refr >= refresh.value)
 		refr = 0;
-		ol_setParameter([name '/Progress'], "number", time, "Progress", "");
-		ol_setParameter('Dyna/time', "number", time, "time", "");
-		ol_setParameter('Solu/phi', "number", phi, "phi", "");
-		% not implemented yet
-		%ol_addNumberChoice('Solu/phi', phi)
-		ol_setParameter('Solu/theta', "number", theta, "theta", "");
-		%not implemented yet
-		%ol_addNumberChoice('Solu/theta', theta)
-		ol_setParameter('Solu/phi_dot', "number", phi_dot, "phi_dot", "");
-		% not yet implemented
-		%ol_addNumberChoice('Solu/phi_dot', phi_dot)
-		ol_setParameter('Solu/theta_dot', "number", theta_dot, "theta_dot", "");
-		%not yet implemented :(
-		%ol_addNumberChoice('Solu/theta_dot', theta_dot)
+		ol_setParameter([name '/Progress'], "number", time.value, "Progress", "");
+		ol_setParameter(time);
+		phi.choices = {phi.choices{:}, phi.value};
+		ol_setParameter(phi);
+		theta.choices = {theta.choices{:}, theta.value};
+		ol_setParameter(theta);
+		phi_dot.choices = {phi_dot.choices{:}, phi_dot.value};
+		ol_setParameter(phi_dot);
+		theta_dot.choices = {theta_dot.choices{:}, theta_dot.value};
+		ol_setParameter(theta_dot);
 
 		% ask Gmsh to refresh
 		ol_setParameter('Gmsh/Action', "string", 'refresh', "action", "");
 
 		% stop if we are asked to (by Gmsh)
-		if (strcmp(ol_getParameters([name "/Action"]).value, "stop"))
+		action = ol_getParameters([name "/Action"]);
+		if (strcmp(action{1}.value, "stop"))
 			break;
 		endif
 
 		exportMsh(l1, l2);
-		exportIter(iter, time, x1, y1+l1, x2, y2+l1+l2);
+		exportIter(iter, time.value, x1, y1+l1, x2, y2+l1+l2);
 		ol_sendMergeFileRequest([pwd '/' 'pend.msh']);
 		iter += 1;
 	endif
