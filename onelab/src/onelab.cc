@@ -15,6 +15,7 @@
 #include <sstream>
 #include <oct.h>
 #include <octave/ov-struct.h>
+#include <octave/ov-cell.h>
 
 #ifndef DEFCONST
 #define DEFCONST(name, defn, doc) DEFCONST_INTERNAL(name, defn, doc)
@@ -516,15 +517,20 @@ DEFUN_DLD (ol_setParameter, args, ,
 		parameter = args(0).scalar_map_value();
 	if (nargin > 2) {
 		parameter.assign("name", args(0).string_value());
+		if (parameter.contents("name").string_value() == "") {
+			error("empty parameter name");
+			return octave_value_list(0);
+		 }
 		std::string type = args(1).string_value();
+		if (type != "string" && type != "number") {
+			error("parameter type not known");
+			return octave_value_list(0);
+		}
 		parameter.assign("type", type);
 		if (type == std::string("number")) {
 				parameter.assign("value", args(2).float_value());
 		} else if (type == std::string("string")) {
 				parameter.assign("value", args(2).string_value());
-		} else {
-			error("parameter type not implemented.");
-		 	return octave_value_list();
 		}
 		parameter.assign("label", "");
 		parameter.assign("help", "");
@@ -534,11 +540,21 @@ DEFUN_DLD (ol_setParameter, args, ,
 	if (nargin > 4)
 		parameter.assign("help", args(4).string_value());
 	// update/create/delete Parameters
-	if (parameter.contents("type").string_value() == "number"){
-		std::string name = parameter.contents("name").string_value();
-		double value = parameter.contents("value").float_value();
-		std::string label = parameter.contents("value").string_value();
+	std::string name = parameter.contents("name").string_value();
+	std::string label;
+	if (parameter.contains("label")) {
+		label = parameter.contents("label").string_value();
+	} else {
+		label = "";
+	}
+	std::string help;
+	if (parameter.contains("help")) {
 		std::string help = parameter.contents("help").string_value();
+	} else {
+		help = "";
+	}
+	if (parameter.contents("type").string_value() == "number"){
+		double value = parameter.contents("value").float_value();
 		onelab::number n = onelab::number(name, value, label, help);
 		if (parameter.contains("changed"))
 			n.setChanged(parameter.contents("changed").bool_value());
@@ -556,29 +572,44 @@ DEFUN_DLD (ol_setParameter, args, ,
 		if (parameter.contains("index"))
 			n.setIndex(parameter.contents("index").int_value());
 		//choices
-//		if (parameter.contains("choices")){
-//			std::vector<double> choices;
-//			std::vector<std::string> choicelabels;
-//			octave_scalar_map octchoices = parameter.contents("choices").scalar_map_value();
-//			for (octave_scalar_map::iterator i = octchoices.begin(); i != octchoices.end(); ++i) {
-//				choices.push_back(i->first);
-//				choicelabels.push_back(i->second);
-//			}
-//			n.setChoices(choices);
-//			n.setChoiceLabels(choicelabels);
-//		}
+		if (parameter.contains("choices")){
+			std::vector<double> choices;
+			octave_value_list octchoices = parameter.contents("choices").list_value();
+			for (int i = 0; i != octchoices.length(); ++i) {
+				choices.push_back(octchoices(i).float_value());
+			}
+			n.setChoices(choices);
+			// Choice labels are ignored as they are messed up
+		}
 		c->set(n);
 	} else if (parameter.contents("type").string_value() == "string") {
-		std::string name = parameter.contents("name").string_value();
 		std::string value = parameter.contents("value").string_value();
-		std::string label = parameter.contents("value").string_value();
-		std::string help = parameter.contents("help").string_value();
 		onelab::string s = onelab::string(name, value, label, help);
+		if (parameter.contains("changed"))
+			s.setChanged(parameter.contents("changed").bool_value());
+		if (parameter.contains("visible"))
+			s.setVisible(parameter.contents("visible").bool_value());
+		if (parameter.contains("readonly"))
+			s.setReadOnly(parameter.contents("readonly").bool_value());
+		//string stuff
+		if (parameter.contains("kind"))
+			s.setKind(parameter.contents("kind").string_value());
+		//choices
+		if (parameter.contains("choices")){
+			std::vector<std::string> choices;
+			octave_value_list octchoices = parameter.contents("choices").list_value();
+			for (int i = 0; i != octchoices.length(); ++i) {
+				choices.push_back(octchoices(i).string_value());
+			}
+			s.setChoices(choices);
+			// Choice labels are ignored as they are messed up
+		}
 		c->set(s);
 	} else {
 		error("missing or invalid parameter type information");
+		return octave_value_list(0);
 	}
-	return octave_value_list ();
+	return octave_value_list(1); //success
 }
 
 void ol2oct(std::vector<onelab::number> parameterlist, octave_value_list &result){
@@ -609,17 +640,13 @@ void ol2oct(std::vector<onelab::number> parameterlist, octave_value_list &result
 		st.assign(std::string("step"), i->getStep());
 		st.assign(std::string("index"), i->getIndex());
 		// Choices
-		octave_scalar_map choices;
 		std::vector<double> c = i->getChoices();
-		for (std::vector<double>::iterator j = c.begin(); j != c.end(); ++j)
-			choices.assign(to_string(*j),std::string("")); //TODO: find out if choice labels can be read
-		st.assign(std::string("Choices"), choices);
-		// Value Labels
-		octave_scalar_map vlabels;
-		std::map<double, std::string> vl = i->getValueLabels();
-		for (std::map<double, std::string>::iterator j = vl.begin(); j != vl.end(); ++j)
-			vlabels.assign(to_string(j->first),j->second);
-		st.assign(std::string("Labels"), vlabels);
+		octave_value_list choices;
+		for (size_t j = 0; j < c.size(); ++j){
+			choices(j) = c.at(j);
+		}
+		st.assign(std::string("choices"), choices.cell_value());
+		// Value Labels are ignored because they are messed up
 		result.append(st);
 	}
 	return;
@@ -649,11 +676,12 @@ void ol2oct(std::vector<onelab::string> parameterlist, octave_value_list &result
 		st.assign(std::string("value"), i->getValue());
 		st.assign(std::string("kind"), i->getKind());
 		// Choices
-		octave_scalar_map choices;
 		std::vector<std::string> c = i->getChoices();
-		for (std::vector<std::string>::iterator j = c.begin(); j != c.end(); ++j)
-			choices.assign(*j,std::string("")); //TODO: find out if choice labels can be read
-		st.assign(std::string("Choices"), choices);
+		octave_value_list choices;
+		for (size_t j = 0; j < c.size(); ++j){
+			choices(j) = c.at(j);
+		}
+		st.assign(std::string("choices"), choices);
 		result.append(st);
 	}
 	return;
