@@ -134,12 +134,14 @@ ol_sendProgress('reading file: input.txt')
 ol_sendMergeFileRequest('foo.msh');
 		\end{lstlisting}
 
+		\subsection{Interactive use}
+		Often when you have computation intensive calculations running you want to check if the results can be right while the computations are still running. You can use ONELAB from the octave terminal to do exactly that. Just use \texttt{interactive.m} as a solver and start your regular solver with \texttt{ol\_runNonBlockingSubClient}. While this works on some systems you might have to modify the \texttt{interactive.m} script to lauch the right terminal and respect the escaping rules of your shell.
 		\section{Examples}
 		The octave onelab package is at the Moment shipped with 2 examples, one being a simple standalone simulation of a pendulum, the other using getdp as a subclient and reading back field values from it.
 		\subsection{pend.m}
 		Just run the solver by adding it from within gmsh and after clicking run it will visualize the movement of the pendulum and export values for the angles for the timesteps. You can then visualize them over the time.
 		\subsection{LaplacianNeumann}
-		This solver shows the use of subclients to exchange data between octave and other onelab solvers. The problem is a simple laplacian-neumann problem in the unit square. The excitation can be varied with a onelab Parameter. This whole Problem is described in the LaplacianNeumann.pro file. The octave solver \texttt{example.m} calls getdp on this problem with different parameter values. Another call to getdp is made to export the values of specific points to onelab, as specified in the ReadPoint.pro file. The octave script then reads the value of these 2 points and multiplies their values returning the result to another ONELAB Parameter. 
+		This solver shows the use of subclients to exchange data between octave and other onelab solvers. The problem is a simple laplacian-neumann problem in the unit square. The excitation can be varied with a onelab Parameter. This whole Problem is described in the LaplacianNeumann.pro file. The octave solver \texttt{example.m} calls getdp\footnote{\url{http://geuz.org/getdp/}} on this problem with different parameter values. Another call to getdp is made to export the values of specific points to onelab, as specified in the ReadPoint.pro file. The octave script then reads the value of these 2 points and multiplies their values returning the result to another ONELAB Parameter. 
 
 		\section{License}
 		The code is licensed under the LGPL v3 or later\footnote{\url{http://www.gnu.org/licenses/lgpl.html}}.
