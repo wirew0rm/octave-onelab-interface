@@ -1,0 +1,146 @@
+\documentclass[article,english,colorback,accentcolor=tud9b,11pt]{tudreport}
+%\documentclass[ngerman,longdoc,colorback,accentcolor=tud9b,11pt]{tudreport}
+
+%% Versionierung: %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\newcommand{\version}{2012.001}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%% PRESETTINGS
+
+\usepackage{babel}
+\usepackage{listings}										%Programmcode einbinden
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing}
+\usepackage{amsmath}
+\usepackage{hyperref}
+
+\usepackage[numbered,framed]{mcode}			%Matlabcode einbinden
+
+\title{Octave Interface for Onelab}
+\subtitle{Alexander Krimm}
+\institution{Institut für Theorie elektromagnetischer Felder\\TU-Darmstadt}
+\date{\today}
+
+\sponsor{%
+\begin{minipage}{0.47\textwidth}
+  Stand: \today
+\end{minipage}
+%\begin{minipage}{0.47\textwidth}
+% \flushright{\textbf{SS 2014}}
+%\end{minipage}
+}
+
+\setinstitutionlogo{TEMF-Logo}
+
+
+\begin{document}
+	
+    \maketitle
+%    \setcounter{tocdepth}{3}
+%    \setcounter{secnumdepth}{3}
+%    \tableofcontents
+
+		\begin{abstract}
+			Open Numerical Engineering LABoratory (ONELAB)\footnote{\url{http://onelab.info/}} is a Project that aims to simplify the use of various Finite Element Software by providing a client/server based Protocoll for different solvers to exchange data. Non native clients can be used by wrapping their input data and the calls to them into *.ol files, but it is more comfortable for the solvers to interface directly with the ONELAB Server. The reference server is included in the meshing software gmsh\footnote{\url{http://www.geuz.org/gmsh/}} and includes C++ Headers and a Python module. The goal of the Octave Interface for Onelab is to provide similar functionalities for solvers written in octave\footnote{\url{http://www.gnu.org/software/octave/}}, as this is a language often used in the field of electromagnetical field calculations.
+		\end{abstract}
+
+		\section{Installation}
+		\subsection{Installation from Octave Package}
+		If you've got the \texttt{onelab-?.?.?.tar.gz} you can install it from octave by running:
+		\begin{lstlisting} 
+			pkg install onelab-?.?.?.tar.gz
+		\end{lstlisting}
+		This installs the octave Package into your home-directory or if you've got the necessary privileges into the respectiv global directory.
+
+		\subsection{Compilation from Source}
+		Onelab comes with a small Makefile, so on unixoid systems a simple \texttt{make all} in the \texttt{src} directory should do the job. To use the octfile compiled this way you have to add your build directory to the octave-path with \texttt{addpath}.
+
+		\subsection{Generating the Octave package from source}
+		If you want to change things in the code and install your modified version as an octave package you can build one with \texttt{make pkg}. Be sure to run \texttt{make clean} before. The files in the parent directory of src are also important for building the package.
+		
+		\section{Usage}
+		To use onelab in octave make sure you have a recent gmsh verion\footnote{The Version used to test this was 2.8.4} and the package is installed somewhere octave can find it.
+		\subsection{Setting up the connection}
+		To start your own Scripts with onelab you have to add them as solvers from the gmsh interface via ``add solver''. This results in gmsh starting your Skript once to initalize and for everytime you click the ``run''-button. To be run your skripts should start with the proper shebang: 
+		\begin{lstlisting} 
+			#!/usr/bin/octave -qf
+		\end{lstlisting}
+		To establish the connection your script has to read out where to connect from the options and open the connection with the \texttt{ol\_connect} command.
+		\begin{lstlisting} 
+% load the onelab api
+pkg load onelab;
+% parameter parsing
+for i = [1:nargin]
+  if (i+2 > nargin)
+    error('invoke with -onelab name server_addr');
+  elseif (strcmp(argv({i},'-onelab'))
+    name = argv({i+1};
+    addr = argv({i+2};
+    break;
+  endif
+endfor
+% Start the client
+ol_client(name, addr);
+		\end{lstlisting}
+		To find out what is expected from our solver we have to read out the Action Parameter from onelab, for example with:
+		\begin{lstlisting} 
+% Quit if the requestet action is not to compute
+action = ol_getParameters([name '/Action']);
+if (!strcmp(action{1}.value, 'compute'))
+	printf('Nothing to do');
+	ol_disconnect()<++>;
+	exit;
+endif
+		\end{lstlisting}
+		Before exiting the script should properly close the connection with:
+		\begin{lstlisting} 
+ol_disconnect(;
+		\end{lstlisting}
+
+		\subsection{Reading and Writing Parameters}
+		To read Parameters from ONELAB the package provides the \texttt{ol\_getParameters} command. If called without argument it returns all parameters from the server, if called with a parameter name, it returns just that Parameter or an empty list. Note that the function always returns cell arrays, so you have to index them with \texttt{\{i\}} even if just one element is returned. The Parameters itself are represented as maps, the most important keys are name, value, type, label, help and choices.
+		\subsection{Launching Subclients}
+		If you want to use other software from inside your solver onelab allows you to launch ``subclients''. They can be either blocking or non-blocking:
+		\begin{lstlisting} 
+% run subclient and wait until it is finished before continuing
+ol_runBlockingSubClient('subclient', ...
+'getdp ReadPoint.pro -res LaplacianNeumann.res -pos readPoint');
+% run other subclient
+ol_runNonBlockingSubClient('subclient2', ...
+'super-cool-simulation-software -solve -real -fast');
+% do some stuff
+ol_waitOnSubClients();
+% do someting with the results and exit
+		\end{lstlisting}
+		The first parameter is the name the subclient gets passed and is also prepended to it's debug output in the gmsh console.
+
+		\subsection{Other useful commands}
+		Other useful commands are mostly for logging:
+		\begin{lstlisting}
+% show a red error in the onelab console 
+ol_sendError('something went wrong')
+% show informative output in the onelab console
+ol_sendInfo('hey there')
+% show warnings in the onelab console
+ol_sendWarning('this looks strange')
+% display progress in the gmsh status bar
+ol_sendProgress('reading file: input.txt')
+		\end{lstlisting}
+
+		You can also send a Merge File request to force gmsh to read and display msh files:
+		\begin{lstlisting}
+ol_sendMergeFileRequest('foo.msh');
+		\end{lstlisting}
+
+		\section{Examples}
+		The octave onelab package is at the Moment shipped with 2 examples, one being a simple standalone simulation of a pendulum, the other using getdp as a subclient and reading back field values from it.
+		\subsection{pend.m}
+		Just run the solver by adding it from within gmsh and after clicking run it will visualize the movement of the pendulum and export values for the angles for the timesteps. You can then visualize them over the time.
+		\subsection{LaplacianNeumann}
+		This solver shows the use of subclients to exchange data between octave and other onelab solvers. The problem is a simple laplacian-neumann problem in the unit square. The excitation can be varied with a onelab Parameter. This whole Problem is described in the LaplacianNeumann.pro file. The octave solver \texttt{example.m} calls getdp on this problem with different parameter values. Another call to getdp is made to export the values of specific points to onelab, as specified in the ReadPoint.pro file. The octave script then reads the value of these 2 points and multiplies their values returning the result to another ONELAB Parameter. 
+
+		\section{License}
+		The code is licensed under the LGPL v3 or later\footnote{\url{http://www.gnu.org/licenses/lgpl.html}}.
+\end{document}
