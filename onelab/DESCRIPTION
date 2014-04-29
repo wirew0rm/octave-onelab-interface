@@ -8,4 +8,4 @@ Description: Bindings to use the onelab
  Interface of Gmsh, a framework to run all kinds of
  Solvers on 2D or 3D Geometries.
 SystemRequirements: Gmsh
-License: tba
+License: LGPLv3
