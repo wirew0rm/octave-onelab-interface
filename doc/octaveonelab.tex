@@ -101,6 +101,8 @@ ol_disconnect(;
 
 		\subsection{Reading and Writing Parameters}
 		To read Parameters from ONELAB the package provides the \texttt{ol\_getParameters} command. If called without argument it returns all parameters from the server, if called with a parameter name, it returns just that Parameter or an empty list. Note that the function always returns cell arrays, so you have to index them with \texttt{\{i\}} even if just one element is returned. The Parameters itself are represented as maps, the most important keys are name, value, type, label, help and choices.
+
+		To write Parameters you can call the function \texttt{ol\_setParameter} either with a single parameter containing a structure like the one returned by \texttt{ol\_getParameters} where the fields name, value and type are mandatory or with more parameters name, type and value.
 		\subsection{Launching Subclients}
 		If you want to use other software from inside your solver onelab allows you to launch ``subclients''. They can be either blocking or non-blocking:
 		\begin{lstlisting} 
