@@ -6,10 +6,6 @@
 
 printf("Starting test solver for octavelab\n");
 
-% load the onelab api the old way when it wasn't an octave package
-%addpath('/home/alex/TEMF/onelab-python-demo/octavelab_cpp/src/')
-%ol_autoload;
-
 % load the onelab api
 pkg load onelab;
 

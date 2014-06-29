@@ -65,7 +65,7 @@
 		\subsection{Setting up the connection}
 		To execute an Octave m-file with ONELAB you have to add it as a solver within the Gmsh interface via ``add solver'', see Fig.~\ref{fig:gmsh}. Since ONELAB will call the script as an executable the script must start with a proper shebang:
 		\begin{lstlisting} 
-			#!/usr/bin/octave -qf
+			#!/usr/bin/octave-cli -qf
 		\end{lstlisting}
 		When added and every time you click on the ``run''-button Gmsh will initialize the script. To establish the connection your script has to read out where to connect from the options and open the connection with the \texttt{ol\_connect} command.
 		\begin{figure}[b]
