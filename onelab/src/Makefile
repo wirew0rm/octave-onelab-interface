@@ -9,7 +9,7 @@ OCT := onelab.oct
 SRC := $(OCT:.oct=.cc)
 
 MKOCTFILE ?= mkoctfile -Wall
-OCTAVE ?= octave
+OCTAVE ?= octave-cli
 
 EXTRALIBS := -lGmsh
 
@@ -30,7 +30,7 @@ clean:
 	rm -f *.o octave-core octave-workspace core *.oct *~ PKG_ADD
  
 #This creates a package for distribution. It requires the checked out hg
-#repo to be named sockets, or that a symlink of name sockets point to the
+#repo to be named onelab, or that a symlink of name onelab point to the
 #checked out repo.
 pkgversion:=$(word 2,$(shell grep ^Version ../DESCRIPTION|head -n1))
 pkg:
