@@ -1,8 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
-// Onelab interface for octave. Exposes all necessary calls from the C++      //
-// bindings to octave.                                                        //
-// Alexander Krimm <alex@wirew0rm.de>, TEMF TU-Darmstadt, 2014                //
-////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+// Onelab interface for octave. Exposes all necessary calls from the C++                    //
+// bindings to octave.                                                                      //
+// Alexander Krimm <alexander_johannes.krimm@stud.tu-darmstadt.de>, TEMF TU-Darmstadt, 2014 //
+//////////////////////////////////////////////////////////////////////////////////////////////
 // PKG_ADD: ollib = which("onelab.oct");
 // PKG_DEL: ollib = which("onelab.oct");
 

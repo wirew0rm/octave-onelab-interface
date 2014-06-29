@@ -1,8 +1,8 @@
 #!/usr/local/bin/octave-cli
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% reimplementation of the standard pendulum example of onelab in octave      %%   
-%% Alexander Krimm <alex@wirew0rm.de>, TEMF TU-Darmstadt, 2014                %%   
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% reimplementation of the standard pendulum example of onelab in octave                      %%   
+%% Alexander Krimm <alexander_johannes.krimm@stud.tu-darmstadt.de>, TEMF TU-Darmstadt, 2014   %%   
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 printf("Starting test solver for octavelab\n");
 

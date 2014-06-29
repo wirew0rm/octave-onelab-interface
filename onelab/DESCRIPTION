@@ -1,8 +1,8 @@
 Name: onelab
 Version: 1.0.0
 Date: 2014-02-04
-Author: Alexander Krimm <alex@wirew0rm.de>
-Maintainer: Alexander Krimm <alex@wirew0rm.de>
+Author: Alexander Krimm <alexander_johannes.krimm@stud.tu-darmstadt.de>
+Maintainer: Alexander Krimm <alexander_johannes.krimm@stud.tu-darmstadt.de>
 Title: onelab
 Description: Bindings to use the onelab
  Interface of Gmsh, a framework to run all kinds of

@@ -1,4 +1,4 @@
-#!/usr/bin/octave -qf
+#!/usr/bin/octave-cli -qf
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Interactive octave promt to interact with onelab                           %%   
 %% Alexander Krimm <alex@wirew0rm.de>, TEMF TU-Darmstadt, 2014                %%   
