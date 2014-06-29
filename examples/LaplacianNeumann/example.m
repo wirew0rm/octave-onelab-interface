@@ -1,14 +1,10 @@
-#!/usr/bin/octave -qf
+#!/usr/local/bin/octave-cli
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% reimplementation of the standard pendulum example of onelab in octave      %%   
 %% Alexander Krimm <alex@wirew0rm.de>, TEMF TU-Darmstadt, 2014                %%   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 printf("Starting test solver for octavelab\n");
-
-% load the onelab api the old way when it wasn't an octave package
-%addpath('/home/alex/TEMF/onelab-python-demo/octavelab_cpp/src/')
-%ol_autoload;
 
 % load the onelab api
 pkg load onelab;
@@ -35,9 +31,12 @@ if (!strcmp(action{1}.value, "compute"))
 	exit;
 endif
 
+% change to directory
+wdir = fileparts(mfilename('fullpath'));
+
 % initialize onelab variables
 meshfilepar.name = "Gmsh/MshFileName";
-meshfilepar.value = "LaplacianNeumann.msh";
+meshfilepar.value = [wdir "/LaplacianNeumann.msh"];
 meshfilepar.type = "string";
 meshfilepar.label = "Mesh File Name";
 meshfilepar.help = "mesh to use";
@@ -84,18 +83,18 @@ ps = [1:10];
 for p = ps
 	% solve the problem
 	par.value = p; ol_setParameter(par);
-	ol_runBlockingSubClient("subclient", "getdp LaplacianNeumann.pro -solve LaplacianNeumann -pos Map_u");
+	ol_runBlockingSubClient("subclient", ["getdp " wdir "/LaplacianNeumann.pro -solve LaplacianNeumann -pos Map_u"]);
 	% read Point P1
 	pointx.value = 0.1; ol_setParameter(pointx);
 	pointy.value = 0.3; ol_setParameter(pointy);
 	dataname.value = "Output/P1"; ol_setParameter(dataname);
-	ol_runBlockingSubClient("subclient", "getdp ReadPoint.pro -res LaplacianNeumann.res -pre LaplacianNeumann -pos readPoint");
+	ol_runBlockingSubClient("subclient", ["getdp " wdir "/ReadPoint.pro -res " wdir "/LaplacianNeumann.res -pre LaplacianNeumann -pos readPoint"]);
 	p1 = ol_getParameters("Output/P1");
 	% read Point P2
 	pointx.value = 0.4; ol_setParameter(pointx);
 	pointy.value = 0.8; ol_setParameter(pointy);
 	dataname.value = "Output/P2"; ol_setParameter(dataname);
-	ol_runBlockingSubClient("subclient", "getdp ReadPoint.pro -res LaplacianNeumann.res -pre LaplacianNeumann -pos readPoint");
+	ol_runBlockingSubClient("subclient", ["getdp " wdir "/ReadPoint.pro -res " wdir "/LaplacianNeumann.res -pre LaplacianNeumann -pos readPoint"]);
 	p2 = ol_getParameters("Output/P2");
 	% Postprocess data to P1 + P2
 	result.value = p1{1}.value * p2{1}.value;
@@ -103,4 +102,5 @@ for p = ps
 	ol_setParameter(result);
 endfor
 
+ol_sendInfo('ende')
 ol_disconnect();

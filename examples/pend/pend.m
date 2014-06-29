@@ -1,4 +1,4 @@
-#!/usr/bin/octave -qf
+#!/usr/local/bin/octave-cli
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% reimplementation of the standard pendulum example of onelab in octave      %%   
 %% Alexander Krimm <alex@wirew0rm.de>, TEMF TU-Darmstadt, 2014                %%   
@@ -27,8 +27,11 @@ endfor
 % Start the client
 ol_client(name, addr);
 
-function exportMsh(le1, le2)
-	fid = fopen ([pwd '/' "pend.msh"], 'w');
+% get working correct dir
+wdir = fileparts(mfilename('fullpath'));
+
+function exportMsh(wdir, le1, le2)
+	fid = fopen ([wdir '/' "pend.msh"], 'w');
 	if (!fid)
 		error("failed to open file");
 		exit;
@@ -39,8 +42,8 @@ function exportMsh(le1, le2)
 	fclose(fid);
 endfunction
 
-function exportMshOpt()
-	fid = fopen ([pwd '/' "pend.msh.opt"], 'w');
+function exportMshOpt(wdir)
+	fid = fopen ([wdir '/' "pend.msh.opt"], 'w');
 	if (!fid)
 		error("failed to open file");
 		exit;
@@ -53,8 +56,8 @@ function exportMshOpt()
 	fclose(fid);
 endfunction
 
-function exportIter(iter, t, x1, y1, x2, y2)
-	fid = fopen ([pwd '/' "pend.msh"], 'a');
+function exportIter(wdir, iter, t, x1, y1, x2, y2)
+	fid = fopen ([wdir '/' "pend.msh"], 'a');
 	if (!fid)
 		error("failed to open file");
 		exit;
@@ -118,7 +121,7 @@ test = ol_toString
 printf("+++\n");
 % we're done if we are in the "check" phase
 action = ol_getParameters([name "/Action"]);
-if (!strcmp(action{1}.value, "compute"))
+if (isempty(action) || !strcmp(action{1}.value, "compute"))
 	printf("Nothing to do");
 	ol_disconnect();
 	exit;
@@ -182,7 +185,7 @@ while (time.value < tmax.value)
 	time.value += dt.value;
 	refr += dt.value;
 
-	exportMshOpt();
+	exportMshOpt(wdir);
 
 	if (refr >= refresh.value)
 		refr = 0;
@@ -206,9 +209,9 @@ while (time.value < tmax.value)
 			break;
 		endif
 
-		exportMsh(l1, l2);
-		exportIter(iter, time.value, x1, y1+l1, x2, y2+l1+l2);
-		ol_sendMergeFileRequest([pwd '/' 'pend.msh']);
+		exportMsh(wdir, l1, l2);
+		exportIter(wdir, iter, time.value, x1, y1+l1, x2, y2+l1+l2);
+		ol_sendMergeFileRequest([wdir '/' 'pend.msh']);
 		iter += 1;
 	endif
 endwhile
