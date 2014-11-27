@@ -1,4 +1,4 @@
-#!/usr/local/bin/octave-cli
+#!/usr/bin/octave-cli
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% reimplementation of the standard pendulum example of onelab in octave                      %%   
 %% Alexander Krimm <alexander_johannes.krimm@stud.tu-darmstadt.de>, TEMF TU-Darmstadt, 2014   %%   

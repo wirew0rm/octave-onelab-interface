@@ -1,4 +1,4 @@
-#!/usr/local/bin/octave-cli
+#!/usr/bin/octave-cli
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Solving a simple 2D Problem and reading out the solution on a specific point               %%   
 %% Alexander Krimm <alexander_johannes.krimm@stud.tu-darmstadt.de>, TEMF TU-Darmstadt, 2014   %%   
