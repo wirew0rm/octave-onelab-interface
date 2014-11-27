@@ -5,3 +5,7 @@ octave-core
 octave-workspace
 *.msh
 *.opt
+*.pre
+*.pos
+*.res
+
