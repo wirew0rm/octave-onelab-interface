@@ -67,7 +67,7 @@ DEFUN_DLD (ol_disconnect, args, ,
 	// check if connected
 	if (c == NULL) {
 		error("Not connected, doing nothing");
-		return octave_value_list ();
+		return octave_value_list();
 	}
 	// check input arguments
 	int nargin = args.length();
